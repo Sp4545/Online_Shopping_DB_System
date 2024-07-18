@@ -1,0 +1,250 @@
+--customers,product categories,products,orders,credit cards,invoices,reviews,recommendations
+
+drop table customers cascade constraints;
+drop table ProductCategories cascade constraints;
+drop table products cascade constraints;
+drop table orders cascade constraints;
+drop table creditcards cascade constraints;
+drop table invoices cascade constraints;
+drop table reviews cascade constraints;
+drop table recommendations cascade constraints;
+
+
+
+--CUSTOMERS
+CREATE TABLE customers(
+  customerID int,
+  name       varchar(20),
+  email      varchar(50),
+  city       varchar(20),
+  state      varchar(20),
+  zip        varchar(5),
+ primary key (customerID)
+);
+
+INSERT INTO customers (customerID, name, email, city, state, zip)
+VALUES (1, 'Rishika Chamala', 'c249@umbc.edu' , 'Baltimore' , 'MD' ,
+'21229');
+
+INSERT INTO customers (customerID, name, email, city, state, zip)
+VALUES (2, 'Rishitha Avula', 'td19092@umbc.edu' , 'Aldie' , 'VA', '20105');
+
+INSERT INTO customers (customerID, name, email, city, state, zip)
+VALUES (3, 'Suman Pogul' , 'sumanp1@umbc.edu' ,  'Ellicot City' , 'MD' ,
+'21043');
+
+INSERT INTO customers (customerID, name, email, city, state, zip)
+VALUES (4, 'Atharva Puranik' , 'atharvp1@umbc.edu' , 'Windsor Mill', 'MD',
+'21244');
+
+INSERT INTO customers (customerID, name, email, city, state, zip)
+VALUES (5, 'Swapnil Sahu' , 'uj35172@umbc.edu' , 'Herndon' , 'VA',
+'20171');
+
+
+
+--PRODUCTCATEGORIES
+CREATE TABLE ProductCategories(
+  categoryID    int,
+  categoryname  varchar(20),
+  description   varchar(100),
+  primary key (categoryID)
+); 
+
+INSERT INTO ProductCategories (categoryID, categoryname, description)
+VALUES (1, 'Women Clothing' , 'Clothing designed for and worn by women.');
+
+INSERT INTO ProductCategories (categoryID, categoryname, description)
+VALUES (2, 'Men Clothing' , 'Clothing designed for and worn by men.');
+
+INSERT INTO ProductCategories (categoryID, categoryname, description)
+VALUES (3, 'Home Appliances' , 'Products that used in home in daily routine.');
+
+INSERT INTO ProductCategories (categoryID, categoryname, description)
+VALUES (4, 'Skin Care', 'Products for skin problems and maintenance.');
+
+INSERT INTO ProductCategories (categoryID, categoryname, description)
+VALUES (5, 'Kids Wear' , 'clothing designed for and worn by kids.');
+
+
+
+--PRODUCTS
+CREATE TABLE products(
+  productID         int not null,
+  productname       varchar(20),
+  availablequantity int,
+  unitprice         float,
+  categoryID        int,
+  primary key (productID),
+  foreign key (categoryID) references ProductCategories(categoryID)
+);
+
+INSERT INTO products (productID, productname, availablequantity,
+unitprice, categoryID) VALUES (1, 'Laptop' , 45, 29.89, 3);
+
+INSERT INTO products (productID, productname, availablequantity,
+unitprice, categoryID) VALUES (2, 'cleanser', 120, 29.89, 4);
+
+INSERT INTO products (productID, productname, availablequantity,
+unitprice, categoryID) VALUES (3, 'Hair Dryer' , 25, 35.89, 3);
+
+INSERT INTO products (productID, productname, availablequantity,
+unitprice, categoryID) VALUES (4, 'Pink crop top' , 15, 14.99, 1);
+
+INSERT INTO products (productID, productname, availablequantity,
+unitprice, categoryID) VALUES (5, 'sports shoes men' , 209, 89.99, 2);
+
+
+
+--ORDERS
+CREATE TABLE orders(
+  orderID      int,
+  customerID   int,
+  productID    int,
+  quantity     int,
+  primary key (orderID),
+  foreign key (customerID) references customers(customerID),
+  foreign key (productID) references products(productID)
+);
+
+INSERT INTO orders (orderID, customerID, productID, quantity)
+VALUES (1, 1, 4, 2);
+
+INSERT INTO orders (orderID, customerID, productID, quantity)
+VALUES (2, 1, 2, 1); 
+
+INSERT INTO orders (orderID, customerID, productID, quantity)
+VALUES(3, 3, 1, 1); 
+
+INSERT INTO orders (orderID, customerID, productID, quantity)
+VALUES(4, 5, 1, 1);
+
+INSERT INTO orders (orderID, customerID, productID, quantity)
+VALUES(5, 2, 2, 2);
+
+
+
+--CREDITCARDS
+CREATE TABLE creditcards(
+  customerID        int,
+  creditcard        number(16),
+  creditcard_type   varchar(15),
+  expiration_year   int, 
+  expiration_month  int, 
+  primary key (creditcard),
+  foreign key (customerID) references customers(customerID)
+);
+
+INSERT INTO creditcards (customerID, creditcard, creditcard_type,
+expiration_year, expiration_month) VALUES (1, '1234567898765432' , 'VISA' , 2027, 09);
+
+INSERT INTO creditcards (customerID, creditcard, creditcard_type,
+expiration_year, expiration_month) VALUES (2, '7253325678961245' , 'VISA' , 2030, 01);
+
+INSERT INTO creditcards (customerID, creditcard, creditcard_type,
+expiration_year, expiration_month) VALUES (3, '4321567890121234' , 'AMEX' , 2029, 05);
+
+INSERT INTO creditcards (customerID, creditcard, creditcard_type,
+expiration_year, expiration_month) VALUES (4, '2412751234123456' , 'AMEX' , 2027, 10);
+
+INSERT INTO creditcards (customerID, creditcard, creditcard_type,
+expiration_year, expiration_month) VALUES (5, '7089567834562234' , 'VISA' , 2025, 08);
+
+
+
+--INVOICES
+CREATE TABLE invoices(
+  invoiceID     int,
+  orderID       int,
+  customerID    int,
+  creditcard   number(16),
+  amount        number,
+  primary key (invoiceID),
+  foreign key (orderID) references orders(orderID),
+  foreign key (customerID) references customers(customerID),
+  foreign key (creditcard) references creditcards(creditcard)
+);
+
+INSERT INTO invoices (invoiceID, orderID, customerID, creditcard,
+amount) VALUES (1, 1, 1, 1234567898765432 , 29.98);
+
+INSERT INTO invoices (invoiceID, orderID, customerID, creditcard,
+amount) VALUES (2, 2, 1, 1234567898765432 , 29.89);
+
+INSERT INTO invoices (invoiceID, orderID, customerID, creditcard,
+amount) VALUES (3, 3, 3, 4321567890121234 , 1299.99);
+
+INSERT INTO invoices (invoiceID, orderID, customerID, creditcard,
+amount) VALUES (4, 4, 5, 7089567834562234 , 1299.99);
+
+INSERT INTO invoices (invoiceID, orderID, customerID, creditcard,
+amount) VALUES (5, 5, 2, 7253325678961245 , 59.78);
+
+
+
+--REVIEWS
+CREATE TABLE reviews(
+  reviewID        int,
+  productID       int,
+  reviewer_email  varchar(20),
+  starsgiven      number,
+  review_text     varchar(100),
+  primary key (reviewID),
+  foreign key (productID) references products(productID)
+);
+
+INSERT INTO reviews (reviewID, productID, reviewer_email, starsgiven,
+review_text) VALUES (1, 4, 'C249@umbc.edu' , 5, 'This tops are pretty cute!');
+
+INSERT INTO reviews (reviewID, productID, reviewer_email, starsgiven,
+review_text) VALUES (2, 2, 'C249@umbc.edu' , 4, 'This is good but applicable for dry skins.');
+
+INSERT INTO reviews (reviewID, productID, reviewer_email, starsgiven,
+review_text) VALUES (3, 1, 'sumanp1@umbc.edu' , 5, 'This is great!');
+
+INSERT INTO reviews (reviewID, productID, reviewer_email, starsgiven,
+review_text) VALUES (4, 1, 'uj35172@umbc.edu' , 4, 'This is good but I did not expect it to be this heavy.');
+
+INSERT INTO reviews (reviewID, productID, reviewer_email, starsgiven,
+review_text) VALUES (5, 2, 'td19092@umbc.edu' , 5, 'This is crazy and goes well with my skin');
+
+
+
+--RECOMMENDATIONS
+CREATE TABLE recommendations(
+  recommendationID           int,
+  customerID                 int,
+  recommendation_productID   int,
+  primary key (recommendationID),
+  foreign key (customerID) references customers(customerID)
+);
+
+INSERT INTO recommendations (recommendationID, customerID,
+recommendation_productID) VALUES (1, 1, 4);
+
+INSERT INTO recommendations (recommendationID, customerID,
+recommendation_productID) VALUES (2, 2, 2);
+
+INSERT INTO recommendations (recommendationID, customerID,
+recommendation_productID) VALUES (3, 3, 1);
+
+INSERT INTO recommendations (recommendationID, customerID,
+recommendation_productID) VALUES (4, 4, 1);
+
+INSERT INTO recommendations (recommendationID, customerID,
+recommendation_productID) VALUES (5, 5, 1);
+
+
+
+--select * commands
+select * from customers;
+select * from ProductCategories;
+select * from products;
+select * from orders;
+select * from creditcards;
+select * from invoices;
+select * from reviews;
+select * from recommendations;
+
+
+

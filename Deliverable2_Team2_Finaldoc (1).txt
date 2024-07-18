@@ -1,0 +1,615 @@
+--customers,product categories,products,orders,credit cards,invoices,reviews,recommendations
+
+drop table customers cascade constraints;
+drop table ProductCategories cascade constraints;
+drop table products cascade constraints;
+drop table orders cascade constraints;
+drop table creditcards cascade constraints;
+drop table invoices cascade constraints;
+drop table reviews cascade constraints;
+drop table recommendations cascade constraints;
+
+
+--CUSTOMERS
+CREATE TABLE customers(
+  customerID int,
+  name       varchar(20),
+  email      varchar(50),
+  city       varchar(20),
+  state      varchar(20),
+  zip        varchar(5),
+ primary key (customerID)
+);
+
+
+--PRODUCTCATEGORIES
+CREATE TABLE ProductCategories(
+  categoryID    int,
+  categoryname  varchar(20),
+  description   varchar(100),
+  primary key (categoryID)
+); 
+
+
+--PRODUCTS
+CREATE TABLE products(
+  productID         int not null,
+  productname       varchar(20),
+  availablequantity int,
+  unitprice         float,
+  categoryID        int,
+  primary key (productID),
+  foreign key (categoryID) references ProductCategories(categoryID)
+);
+
+
+--ORDERS
+CREATE TABLE orders(
+  orderID      int,
+  customerID   int,
+  productID    int,
+  quantity     int,
+  orderdate    date,
+  primary key (orderID),
+  foreign key (customerID) references customers(customerID),
+  foreign key (productID) references products(productID)
+);
+
+
+--CREDITCARDS
+CREATE TABLE creditcards(
+  customerID        int,
+  creditcard        number(16),
+  creditcard_type   varchar(15),
+  expiration_year   int, 
+  expiration_month  int, 
+  primary key (creditcard),
+  foreign key (customerID) references customers(customerID)
+);
+
+
+--INVOICES
+CREATE TABLE invoices(
+  invoiceID     int,
+  orderID       int,
+  customerID    int,
+  creditcard   number(16),
+  amount        number,
+  primary key (invoiceID),
+  foreign key (orderID) references orders(orderID),
+  foreign key (customerID) references customers(customerID),
+  foreign key (creditcard) references creditcards(creditcard)
+);
+
+
+--REVIEWS
+CREATE TABLE reviews(
+  reviewID        int,
+  productID       int,
+  reviewer_email  varchar(20),
+  starsgiven      number,
+  review_text     varchar(100),
+  primary key (reviewID),
+  foreign key (productID) references products(productID)
+);
+
+
+--RECOMMENDATIONS
+CREATE TABLE recommendations(
+  recommendationID           int,
+  customerID                 int,
+  recommendation_productID   int,
+  primary key (recommendationID),
+  foreign key (customerID) references customers(customerID)
+);
+
+set serveroutput on;
+
+--sequence drop queries
+
+
+drop sequence customer_seq;
+drop sequence categoryID_seq;
+drop sequence productID_seq;
+drop sequence InvoiceID_seq;
+drop sequence ReviewID_seq;
+drop sequence RecommendationID_seq;
+
+
+--create sequences queries
+
+--creating sequence to generate automatic IDs for product table
+create sequence categoryID_seq start with 1;
+
+--creating sequence to generate automatic IDs for product table
+create sequence productID_seq start with 1;
+
+--creating sequence to generate automatic IDs for invoice table
+create sequence InvoiceID_seq start with 1;
+
+-- create a sequence for generating IDs for the Reviews table
+CREATE SEQUENCE ReviewID_seq
+    START WITH 1;
+
+
+-- create a sequence for generating IDs for the Recommendations table
+CREATE SEQUENCE RecommendationID_seq
+    START WITH 1;
+
+--creating sequence to generate automatic IDs for product table
+CREATE SEQUENCE customer_seq START WITH 1;
+
+
+
+
+--Member 1 Rishika
+--operation 1
+
+CREATE OR REPLACE PROCEDURE Add_customer (
+    p_name IN customers.name%TYPE,
+    p_email IN customers.email%TYPE,
+    p_city IN customers.city%TYPE,
+    p_state IN customers.state%TYPE,
+    p_zip IN customers.zip%TYPE,
+    p_creditcard IN creditcards.creditcard%TYPE,
+    p_creditcard_type IN creditcards.creditcard_type%TYPE,
+    p_expiration_month IN creditcards.expiration_month%TYPE,
+    p_expiration_year IN creditcards.expiration_year%TYPE
+) AS
+  v_customerID NUMBER;
+BEGIN
+  -- Get the next customerID from the sequence
+  SELECT customer_seq.NEXTVAL INTO v_customerID FROM dual;
+  
+  INSERT INTO customers (customerID, name, email, city, state, zip)
+  VALUES (v_customerID, p_name, p_email, p_city, p_state, p_zip);
+  
+  INSERT INTO CreditCards (customerID, creditcard, creditcard_type, expiration_month, expiration_year)
+  VALUES (v_customerID, p_creditcard, p_creditcard_type, p_expiration_month, p_expiration_year);
+  
+  COMMIT;
+  dbms_output.put_line('Customer added with ID: ' || v_customerID);
+EXCEPTION
+  -- Output an error message if there is an exception
+  WHEN OTHERS THEN
+    dbms_output.put_line('Error adding customer: ' || SQLERRM);
+END;
+/
+
+exec Add_customer('John Smith', 'john@smith.com', 'Baltimore', 'MD', '21250', '12345', 'VISA', '10', '2023');
+exec Add_customer('Pat Wagner', 'pat@wagner.com', 'Washington', 'DC', '20001', '12348', 'VISA', '10', '2025');
+exec Add_customer('Mary Poppins', 'mary@poppins.com', 'Los Angeles', 'CA', '90001', '45678', 'Discover', '11', '2023');
+exec Add_customer('Rajeev Kumar', 'rajeev@kumar.com', 'New York', 'NY', '10001', '45679', 'Discover', '10', '2023');
+
+--operation 2
+
+create or replace PROCEDURE Show_all_customers_in_state (
+  p_state IN VARCHAR2
+)
+IS
+BEGIN
+  FOR c IN (SELECT customers.name, customers.email, customers.city, creditcards.creditcard, creditcards.creditcard_type
+            FROM customers
+            JOIN creditcards ON customers.customerid = creditcards.customerid
+            WHERE customers.state = p_state)
+  LOOP
+    DBMS_OUTPUT.PUT_LINE('Name: ' || c.name);
+    DBMS_OUTPUT.PUT_LINE('Email: ' || c.email);
+    DBMS_OUTPUT.PUT_LINE('Address: ' || c.city || ', ' || p_state);
+    DBMS_OUTPUT.PUT_LINE('credit card: ' || c.creditcard || 'type' || c.creditcard_type);
+    DBMS_OUTPUT.PUT_LINE('-----------------------');
+  END LOOP;
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLCODE || ' - ' || SQLERRM);
+END;
+/
+
+
+
+
+--Member 2 SUMAN POGUL 
+
+--Task 1
+--operation 5
+
+--creating procedure Add_Category
+
+create or replace procedure Add_Category(
+category_name in ProductCategories.Categoryname%type, 
+category_desc in ProductCategories.Description%type
+)
+IS
+Begin
+Insert into ProductCategories values(categoryID_seq.nextval, category_name, category_desc);
+dbms_output.put_line('Product Category added successfully.');
+Exception
+when no_data_found then
+dbms_output.put_line('no rows found');
+when others then
+dbms_output.put_line('SQLCODE: ' || SQLCODE);
+dbms_output.put_line('SQLERRM: ' || SQLERRM);
+End;
+/
+
+--adding the product categories by calling the procedure Add_Category
+
+exec Add_Category('Electronics', 'Mobile devices products');
+exec Add_Category('Music','Music related books');
+
+--view all the product categories
+select * from ProductCategories;
+
+--Task 2
+--operation 6
+
+--creating FIND_PRODUCT_CATEGORY_ID helper function
+
+create or replace function FIND_PRODUCT_CATEGORY_ID(
+category_n in ProductCategories.Categoryname%type
+)
+return int
+IS
+cat_ID int;
+Begin
+Select categoryID into cat_ID from ProductCategories where categoryname = category_n;
+return cat_ID;
+Exception
+when no_data_found then
+dbms_output.put_line('Category do not exists');
+return -1;
+END;
+/
+
+
+--creating Add_Product procedure
+
+create or replace procedure Add_Product(
+product_name in products.productname%type,
+available_quantity in products.availablequantity%type,
+unit_price in products.unitprice%type,
+category_name in ProductCategories.categoryname%type
+) 
+IS
+category_ID ProductCategories.categoryID%type;
+Begin
+category_ID := FIND_PRODUCT_CATEGORY_ID(category_name);
+insert into products values (productID_seq.nextval, product_name, available_quantity, unit_price, category_ID);
+dbms_output.put_line('Product added successfully.');
+Exception
+when no_data_found then
+dbms_output.put_line('no rows found');
+when others then
+dbms_output.put_line('SQLCODE: ' || SQLCODE);
+dbms_output.put_line('SQLERRM: ' || SQLERRM);
+End;
+/
+
+--adding the products by calling the procedure Add_Prodcut
+
+exec Add_Product('40inchTV',100, 200,'Electronics');
+exec Add_Product('50inchTV',100, 300,'Electronics');
+exec Add_Product('80inchTV',100, 1000,'Electronics');
+exec Add_Product('BestOfBeyonce',100, 20,'Music');
+exec Add_Product('BestOfTaylorSwift',100, 20,'Music');
+exec Add_Product('BestOfEminem',100, 20,'Music');
+exec Add_Product('BestOfWeeknd',100, 20,'Music');
+
+--view all the products
+select * from products;
+
+
+--Member 3 Swapnil Sahu
+--Operation 9 Place_Order Procedure
+
+--creating helper function find_customer_id to get customer id from email
+
+create or replace procedure find_customer_id(
+  email_address in varchar2,
+  customer_id out number
+)
+is
+begin
+  select customerid into customer_id from customers where email = email_address;
+  dbms_output.put_line('Customer Id is' ||' '||customer_id);
+exception
+  when no_data_found then
+    dbms_output.put_line('Email Address does not exist');
+end;
+/
+--creating helper function find_product_id to get product id from product name
+
+create or replace procedure find_product_id(
+  product_name in varchar2,
+  product_id out number
+)
+is
+begin
+  select productid into product_id from products where productname = product_name;
+  dbms_output.put_line('Product ID is' ||' '||product_id);
+exception
+  when no_data_found then
+    dbms_output.put_line('product name does not exist');
+end;
+/
+--creating helper function find_order_by_date to get order id from order date
+
+create or replace PROCEDURE find_order_by_date (
+  p_order_date IN DATE,
+  p_order_id OUT NUMBER
+)
+IS
+BEGIN
+  -- Retrieve the order ID for the given order date
+  SELECT orderid INTO p_order_id
+  FROM Orders
+  WHERE orderdate = p_order_date;
+
+  -- Print a message to indicate the result
+  IF p_order_id IS NOT NULL THEN
+    DBMS_OUTPUT.PUT_LINE('Order ID for order date ' || p_order_date || ': ' || p_order_id);
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('No order found for order date ' || p_order_date);
+  END IF;
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('No order found for order date ' || p_order_date);
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Error finding order: ' || SQLERRM);
+END;
+/
+--creating update inventory procedure to update in the products table
+
+create or replace PROCEDURE update_inventory (
+  product_id IN NUMBER,
+  quantity IN NUMBER
+)
+IS
+new_quant number;
+BEGIN
+  -- Update the inventory for the product
+  UPDATE products
+  SET availablequantity = availablequantity - quantity
+  WHERE productid = product_id;
+
+  select availablequantity into new_quant from products where productid = product_id;
+
+  DBMS_OUTPUT.PUT_LINE('Product Quantity updated for product ID ' || product_id || ' with new quantity ' || new_quant);
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('No inventory found for product ID ' || product_id);
+END;
+/
+--creating invoice customer procedure to update the invoices table
+
+create or replace PROCEDURE invoice_customer (
+  p_order_id IN NUMBER,
+  p_customer_id IN NUMBER,
+  p_credit_card_num IN VARCHAR2,
+  p_amount IN NUMBER
+)
+IS
+  v_invoice_id NUMBER;
+BEGIN
+  -- Get the next available invoice ID from the sequence
+  SELECT invoiceid_seq.NEXTVAL INTO v_invoice_id FROM DUAL;
+
+  -- Insert a new record into the Invoice table
+  INSERT INTO invoices(invoiceid, orderid, customerid, creditcard, amount)
+  VALUES (v_invoice_id, p_order_id, p_customer_id, p_credit_card_num, p_amount);
+
+  -- Print a message to indicate that the invoice was created
+  DBMS_OUTPUT.PUT_LINE('Invoice ' || v_invoice_id || ' created for Customer ID ' || p_customer_id || ' for amount $' || p_amount);
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Error creating invoice: ' || SQLERRM);
+END;
+/
+
+--Creating the place_order procedure
+
+create or replace procedure place_order (
+    cust_email in varchar2,
+    product_name in varchar2,
+    quant in number,
+    cc_num in number,
+    order_date date
+)
+as
+    cust_id number;
+    prod_id number;
+    order_id number;
+begin
+    -- find the customer ID based on their email address
+    find_customer_id(cust_email, cust_id);
+
+    -- find the product ID based on its name
+    find_product_id(product_name, prod_id);
+    
+    --find the order ID based on its date
+    find_order_by_date(order_date, order_id);
+
+    -- call the Update_Inventory procedure to update the product inventory
+    update_inventory(prod_id, quant);
+
+    -- call the Invoice_Customer procedure to generate an invoice for the order
+    invoice_customer(order_id, cust_id, cc_num);
+
+    -- commit the transaction
+    --commit;
+exception
+    when others then
+        -- rollback the transaction in case of any errors
+        rollback;
+        raise;
+end;
+/
+
+exec place_order('john@smith.com', '50inchTV', 2, 12345, date '2023-5-10');
+
+/
+select * from products;
+select * from invoices;
+
+
+--Operation 10
+
+DECLARE
+    v_total_orders NUMBER := 0;
+BEGIN
+    -- query to retrieve all orders
+    FOR m IN (
+        SELECT 
+            c.name,
+            o.quantity,
+            p.productname
+
+        FROM 
+            orders o
+            JOIN customers c ON o.customerid = c.customerid
+            JOIN products p ON o.productid = p.productid
+            join invoices i on o.orderid = i.orderid
+    ) LOOP
+        -- output order details
+        DBMS_OUTPUT.PUT_LINE(
+          'Name-' || ' ' || m.name || ' ' ||
+         'Product-' || ' ' || m.productname || ' ' ||
+         'Quantity-' || ' ' || m.quantity 
+        );
+        
+        -- add to the total number of orders
+        v_total_orders := v_total_orders + 1;
+    END LOOP;
+    
+    -- output grand total
+    DBMS_OUTPUT.PUT_LINE('Grand Total: ' || v_total_orders);
+END;
+/
+
+
+--Member 4 Atharva Puranik
+--Task 1
+
+CREATE OR REPLACE PROCEDURE INVOICE_CUSTOMER (Order_ID  INT, Customer_ID  INT, CREDITCARDNUMBER  NUMBER, AMOUNT  NUMBER) IS
+counter1 int;
+counter2 int;
+BEGIN
+select count(1) into counter1 from orders where orderid=order_ID;
+select count(1) into counter2 from customers where customerid=customer_ID;
+
+if counter1<=0 and counter2>0 then
+dbms_output.put_line('No such order');
+elsif counter2<=0 and counter1>0 then
+dbms_output.put_line('No such customer');
+elsif counter2<=0 and counter1<=0 then
+dbms_output.put_line('No such order and customer');
+
+else
+insert into invoices values(InvoiceID_seq.nextval,Order_ID,Customer_ID, CREDITCARDNUMBER, AMOUNT );
+end if;
+Exception
+when no_data_found then
+Dbms_output.put_line('no rows found');
+
+END;
+/
+
+-- Task 2
+CREATE OR REPLACE PROCEDURE REPORT_BEST_CUSTOMERS (A IN int) IS
+CURSOR C1 IS SELECT c.name as cname, i.amount as amount FROM invoices i, customers c WHERE c.customerid=i.customerid and  amount>a order by amount desc;
+counter int;
+BEGIN
+select count(1) into counter from invoices i, customers c where c.customerid=i.customerid and i.amount>a;
+if counter<=0 then
+dbms_output.put_line('No such customer');
+else
+for i in c1 loop
+dbms_output.put_line('Customer Name: ' || i.cname ||'  | Amount: ' || i.amount);
+end loop;
+end if;
+Exception
+when no_data_found then
+Dbms_output.put_line('no rows found');
+
+END;
+/
+
+
+
+
+--Member 5 Rishitha
+
+--task1
+--operation 17
+--helper function
+
+CREATE OR REPLACE FUNCTION findproductIDbyproductname(Aproductname varchar(200))
+RETURNS INT
+AS
+AproductID int;
+BEGIN 
+       SELECT productID INTO AproductID
+       FROM products
+       WHERE productname=Aproductname;
+RETURN AproductID;
+Exception
+when no_data_found then
+dbms_output.put_line('no rows found');
+RETURN -1;
+END;
+/
+
+--Add_Review procedure create and insert
+
+CREATE OR REPLACE PROCEDURE Add_Review(Areviewer_email varchar(20), Astarsgiven number, Aproductname varchar(200), Areview_text varchar(100))
+AS
+AproductID int;
+BEGIN
+AproductID:=dbo.findproductIDbyproductname(Aproductname);
+     INSERT INTO reviews(productID,reviewer_email,starsgiven,review_text) VALUES (AproductID,Areviewer_email,Astarsgiven,Areview_text);
+Exception
+when no_data_found then
+dbms_output.put_line('no rows found');
+
+END;
+/
+
+--task 2
+--operation 18
+
+--Buy_Or_Beware
+
+CREATE OR REPLACE PROCEDURE Buy_Or_Beware(
+  X IN NUMBER)
+AS
+BEGIN
+  -- Top rated products
+  DBMS_OUTPUT.PUT_LINE('Top rated products');
+  SELECT *
+  FROM (
+    SELECT AVG(starsgiven) AS avg_stars, reviews.productID, productname, STDEVP(starsgiven) AS StandardDeviation
+    FROM reviews
+    JOIN products ON reviews.productID = products.productID
+    GROUP BY reviews.productID,productname
+    ORDER BY avg_stars DESC
+  );
+  
+  -- Buyer Beware: Stay Away from...
+  DBMS_OUTPUT.PUT_LINE('Buyer Beware: Stay Away from...');
+  SELECT *
+  FROM (
+    SELECT AVG(starsgiven) AS avg_stars, reviews.productID, productname, STDEVP(starsgiven) AS StandardDeviation
+    FROM reviews
+    JOIN products ON reviews.productID = products.productID
+    GROUP BY reviews.productID, productname
+    ORDER BY avg_stars ASC
+  );
+
+Exception
+when no_data_found then
+dbms_output.put_line('no rows found');
+END;
+/
+
+

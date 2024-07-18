@@ -1,0 +1,51 @@
+
+--creating Update Inventory procedure
+create or replace procedure Update_Inventory(
+  product_id in int,
+  quantity in number
+)
+is
+new_quant number;
+begin
+  -- Update the inventory for the product
+  update products
+  set availablequantity = availablequantity + quantity
+  where productid = product_id;
+
+  select availablequantity into new_quant from products where productid = product_id;
+
+  dbms_output.put_line('Product Quantity updated for product ID ' || product_id || ' with new quantity ' || new_quant);
+
+exception
+  when no_data_found then
+    dbms_output.put_line('No inventory found for product ID ' || product_id);
+end;
+/
+
+--calling the above procedure
+exec Update_Inventory(5, 51);
+
+
+
+
+--creating Report_Inventory procedure
+
+create or replace procedure Report_Inventory
+is
+begin
+for cat1 in (select categoryname, categoryID from ProductCategories)
+loop
+--printing the category name
+dbms_output.put_line('Category Name: ' || cat1.categoryname);
+dbms_output.put_line('  Product Name:  ' || 'Quantity');
+--printing the product name along with their available quantity
+for prod1 in (select productname, availablequantity from products where categoryID = cat1.categoryID)
+loop
+dbms_output.put_line('  ' || prod1.productname || '  ' || prod1.availablequantity);
+End loop;
+End loop;
+End;
+/
+
+--calling the above procedure
+exec Report_Inventory;
